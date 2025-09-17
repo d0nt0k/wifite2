@@ -6,22 +6,26 @@
 [![GitHub license](https://img.shields.io/github/license/kimocoder/wifite2.svg)](https://github.com/kimocoder/wifite2/blob/master/LICENSE)
 
 
-Wifite
-======
+Wifite2 - WPA-Only Edition
+=========================
 
-This repo is a complete re-write of [`wifite`](https://github.com/derv82/wifite), a Python script for auditing wireless networks.
+This repo is a **specialized WPA-only version** of [`wifite2`](https://github.com/kimocoder/wifite2), a Python script for auditing wireless networks.
+
+**🔒 WPA-ONLY FOCUS**: This version has been specifically modified to **only support WPA/WPA2/WPA3 attacks**, removing all WEP, WPS, and PMKID functionality for a streamlined, focused approach to WPA security testing.
 
 Wifite runs existing wireless-auditing tools for you. Stop memorizing command arguments & switches!
 
-Wifite is designed to use all known methods for retrieving the password of a wireless access point (router).  These methods include:
-1. WPS: The [Offline Pixie-Dust attack](https://en.wikipedia.org/wiki/Wi-Fi_Protected_Setup#Offline_brute-force_attack)
-1. WPS: The [Online Brute-Force PIN attack](https://en.wikipedia.org/wiki/Wi-Fi_Protected_Setup#Online_brute-force_attack)<br>
-   WPS: The [Offline NULL PIN attack](https://github.com/t6x/reaver-wps-fork-t6x/wiki/Introducing-a-new-way-to-crack-WPS:-Option--p-with-an-Arbitrary-String)
-2. WPA: The [WPA Handshake Capture](https://hashcat.net/forum/thread-7717.html) + offline crack.
-3. WPA: The [PMKID Hash Capture](https://hashcat.net/forum/thread-7717.html) + offline crack.
-4. WEP: Various known attacks against WEP, including *fragmentation*, *chop-chop*, *aireplay*, etc.
-5. WIFI Signal jammer, block specific accesspoints or multiple.
-   signal jamming only works for specific Atheros WiFi chipsets. 
+**This WPA-Only Edition supports:**
+1. **WPA/WPA2 Handshake Capture** + offline cracking with Hashcat
+2. **WPA3-SAE Support** for modern networks
+3. **Streamlined Interface** - No confusing attack type selection
+4. **Focused Security Testing** - Only WPA-encrypted networks are targeted
+
+**Removed for Simplicity:**
+- ❌ WEP attacks (replay, fragment, chopchop, etc.)
+- ❌ WPS attacks (PIN, Pixie-Dust)  
+- ❌ PMKID attacks
+- ❌ All related command line arguments and configuration options 
 
 Run wifite, select your targets, and Wifite will automatically start trying to capture or crack the password.
 
@@ -43,32 +47,25 @@ First and foremost, you will need a wireless card capable of "Monitor Mode" and 
 
 Second, only the latest versions of these programs are supported and must be installed for Wifite to work properly:
 
-**Required:**
+**Required for WPA-Only Edition:**
 
-* Suggest using `python3` as `python2` was marked deprecated as of january 2020.
-* As we moved from older python and changed to fully support and run on `python3.11`
+* `python3` (Python 3.11+ recommended)
 * [`Iw`](https://wireless.wiki.kernel.org/en/users/documentation/iw): For identifying wireless devices already in Monitor Mode.
 * [`Ip`](https://packages.debian.org/buster/net-tools): For starting/stopping wireless devices.
 * [`Aircrack-ng`](https://aircrack-ng.org/) suite, includes:
    * [`airmon-ng`](https://tools.kali.org/wireless-attacks/airmon-ng): For enumerating and enabling Monitor Mode on wireless devices.
-   * [`aircrack-ng`](https://tools.kali.org/wireless-attacks/aircrack-ng): For cracking WEP .cap files and WPA handshake captures.
-   * [`aireplay-ng`](https://tools.kali.org/wireless-attacks/aireplay-ng): For deauthing access points, replaying capture files, various WEP attacks.
-   * [`airodump-ng`](https://tools.kali.org/wireless-attacks/airodump-ng): For target scanning & capture file generation.
-   * [`packetforge-ng`](https://tools.kali.org/wireless-attacks/packetforge-ng): For forging capture files.
+   * [`aireplay-ng`](https://tools.kali.org/wireless-attacks/aireplay-ng): For deauthenticating clients during handshake capture.
+   * [`airodump-ng`](https://tools.kali.org/wireless-attacks/airodump-ng): For target scanning & WPA handshake capture.
+
+**Required for WPA Cracking:**
+
+* [`hashcat`](https://hashcat.net/): For cracking WPA handshakes (primary method)
+* [`tshark`](https://www.wireshark.org/docs/man-pages/tshark.html): For handshake validation and analysis
 
 **Optional, but Recommended:**
 
-* [`tshark`](https://www.wireshark.org/docs/man-pages/tshark.html): For detecting WPS networks and inspecting handshake capture files.
-* [`reaver`](https://github.com/t6x/reaver-wps-fork-t6x): For WPS Pixie-Dust & brute-force attacks.
-   * Note: Reaver's `wash` tool can be used to detect WPS networks if `tshark` is not found.
-* [`bully`](https://github.com/aanarchyy/bully): For WPS Pixie-Dust & brute-force attacks.
-   * Alternative to Reaver. Specify `--bully` to use Bully instead of Reaver.
-   * Bully is also used to fetch PSK if `reaver` cannot after cracking WPS PIN.
-* [`john`](https://www.openwall.com/john): For CPU (OpenCL)/GPU cracking passwords fast.
-* [`coWPAtty`](https://tools.kali.org/wireless-attacks/cowpatty): For detecting handshake captures.
-* [`hashcat`](https://hashcat.net/): For cracking PMKID hashes.
-   * [`hcxdumptool`](https://github.com/ZerBea/hcxdumptool): For capturing PMKID hashes.
-   * [`hcxpcapngtool`](https://github.com/ZerBea/hcxtools): For converting PMKID packet captures into `hashcat`'s format.
+* [`coWPAtty`](https://tools.kali.org/wireless-attacks/cowpatty): For additional handshake validation
+* [`john`](https://www.openwall.com/john): Alternative password cracking tool
 
 
 
@@ -82,102 +79,174 @@ $ source venv/bin/activate
 $ pip3 install -r requirements.txt
 ```
 
-## Install Wifite
+## Download and Install
 
-To install Wifite, run:
-
+### **Step 1: Clone the Repository**
 ```sh
-git clone https://github.com/kimocoder/wifite2.git
+git clone https://github.com/d0nt0k/wifite2.git
 cd wifite2
-sudo python3 setup.py install
 ```
 
-## Run Wifite
-
-To run Wifite, simply execute:
-
+### **Step 2: Install Dependencies**
 ```sh
+# Install Python dependencies
+pip3 install -r requirements.txt
+
+# Install required system tools (Ubuntu/Debian/Kali)
+sudo apt update
+sudo apt install aircrack-ng hashcat tshark
+
+# Install required system tools (Arch Linux)
+sudo pacman -S aircrack-ng hashcat tshark
+
+# Install required system tools (macOS)
+brew install aircrack-ng hashcat tshark
+```
+
+### **Step 3: Run Wifite2 WPA-Only**
+```sh
+# Run directly from the cloned directory
+sudo python3 wifite2/wifite/wifite.py
+
+# Or install system-wide first, then run
+sudo python3 setup.py install
 sudo wifite
 ```
 
 
 
-Brief Feature List
-------------------
-* [PMKID hash capture](https://hashcat.net/forum/thread-7717.html) (enabled by-default, force with: `--pmkid`)
-* WPS Offline Brute-Force Attack aka "Pixie-Dust". (enabled by-default, force with: `--wps-only --pixie`)
-* WPS Online Brute-Force Attack aka "PIN attack". (enabled by-default, force with: `--wps-only --no-pixie`)
-* WPA/2 Offline Brute-Force Attack via 4-Way Handshake capture (enabled by-default, force with: `--no-wps`)
-* Validates handshakes against `tshark`, `cowpatty`, and `aircrack-ng` (when available)
-* Various WEP attacks (replay, chopchop, fragment, hirte, p0841, caffe-latte)
-* Automatically decloaks hidden access points while scanning or attacking.
+WPA-Only Feature List
+---------------------
+* **WPA/WPA2 Handshake Capture** - Automatic 4-way handshake capture with client deauthentication
+* **WPA3-SAE Support** - Full support for modern WPA3 networks
+* **Hashcat Integration** - Primary cracking engine for WPA handshakes
+* **Handshake Validation** - Validates captures against `tshark`, `cowpatty`, and `aircrack-ng`
+* **Automatic Decloaking** - Reveals hidden access points during scanning
    * Note: Only works when channel is fixed. Use `-c <channel>`
    * Disable this using `--no-deauths`
-* 5Ghz support for some wireless cards (via `-5` switch).
-   * Note: Some tools don't play well on 5GHz channels (e.g. `aireplay-ng`)
-* Stores cracked passwords and handshakes to the current directory (`--cracked`)
-   * Includes information about the cracked access point (Name, BSSID, Date, etc).
-* Easy to try to crack handshakes or PMKID hashes against a wordlist (`--crack`)
+* **5GHz Support** - Works with 5GHz wireless cards (via `-5` switch)
+* **Handshake Storage** - Saves captured handshakes to `hs/` directory
+* **Cracked Password Storage** - Stores results in `cracked.json` with network details
+* **Wordlist Cracking** - Easy handshake cracking with `--dict` option
+* **Streamlined Interface** - No attack type selection needed, focuses on WPA only
 
 TIP! Use `wifite.py -h -v` for a collection of switches and settings
 for your own customization, automation, timers and so on ..
 
-What's new?
------------
-Comparing this repo to the "old wifite" @ https://github.com/derv82/wifite
+What's New in WPA-Only Edition?
+-------------------------------
+This specialized version focuses exclusively on WPA security testing:
 
-* **Less bugs**
-   * Cleaner process management. Does not leave processes running in the background (the old `wifite` was bad about this).
-   * No longer "one monolithic script". Has working unit tests. Pull requests are less-painful!
-* **Speed**
-   * Target access points are refreshed every second instead of every 5 seconds.
-* **Accuracy**
-   * Displays realtime Power level of currently-attacked target.
-   * Displays more information during an attack (e.g. % during WEP chopchop attacks, Pixie-Dust step index, etc)
-* **Educational**
-   * The `--verbose` option (expandable to `-vv` or `-vvv`) shows which commands are executed & the output of those commands.
-   * This can help debug why Wifite is not working for you. Or so you can learn how these tools are used.
-* More-actively developed, with some help from the awesome open-source community.
-* Python 3 support.
-* Sweet new ASCII banner.
+* **🔒 WPA-Only Focus**
+   * Removed all WEP, WPS, and PMKID attack functionality
+   * Streamlined interface with no attack type selection needed
+   * Only scans and attacks WPA-encrypted networks
+* **⚡ Simplified Workflow**
+   * No confusing attack type menus
+   * Automatic WPA handshake capture and cracking
+   * Clean, focused user experience
+* **🛠️ Optimized for WPA**
+   * Hashcat as primary cracking engine
+   * Enhanced WPA3-SAE support
+   * Improved handshake validation
+* **📦 Reduced Dependencies**
+   * No need for WPS tools (reaver, bully)
+   * No need for PMKID tools (hcxdumptool, hcxpcapngtool)
+   * Minimal tool requirements for WPA testing
 
-What's gone?
-------------
-* Some command-line arguments (`--wept`, `--wpst`, and other confusing switches).
-   * You can still access some of these obscure options, try `wifite -h -v`
-
-What's not new?
+What's Removed?
 ---------------
-* (Mostly) Backwards compatible with the original `wifite`'s arguments.
-* Same text-based interface everyone knows and loves.
+* **WEP Attacks**: All WEP-related functionality (replay, fragment, chopchop, etc.)
+* **WPS Attacks**: PIN attacks, Pixie-Dust attacks, and related tools
+* **PMKID Attacks**: PMKID hash capture and cracking
+* **Related Arguments**: All WEP, WPS, and PMKID command line options
+* **Complex Menus**: No more attack type selection screens
 
-Screenshots
------------
+What's Preserved?
+-----------------
+* **Core WPA Functionality**: All WPA handshake capture and cracking features
+* **User Interface**: Same familiar text-based interface
+* **Python 3 Support**: Full Python 3.11+ compatibility
+* **Educational Value**: Verbose mode shows executed commands
+* **Process Management**: Clean process handling without background processes
 
-NetHunter Android 13 (S) scanning for targets / target information
-![Scanning for targets](https://i.imgur.com/IzXweSH.jpg)
+## Quick Start Guide
 
--------------
+### **Basic Usage**
+```bash
+# 1. Download and setup (one-time)
+git clone https://github.com/d0nt0k/wifite2.git
+cd wifite2
+pip3 install -r requirements.txt
 
-Cracking WPS PIN using `reaver`'s Pixie-Dust attack, then fetching WPA key using `bully`:
-![Pixie-Dust with Reaver to get PIN and Bully to get PSK](https://i.imgur.com/Q5KSDbg.gif)
+# 2. Run the tool
+sudo python3 wifite2/wifite/wifite.py
+```
 
--------------
+### **Advanced Usage Examples**
+```bash
+# Attack specific WPA network by BSSID
+sudo python3 wifite2/wifite/wifite.py -b AA:BB:CC:DD:EE:FF
 
-Cracking WPA key using PMKID attack:
-![PMKID attack](https://i.imgur.com/CR8oOp0.gif)
+# Use custom wordlist for cracking
+sudo python3 wifite2/wifite/wifite.py --dict /path/to/wordlist.txt
 
--------------
+# Attack specific channel only
+sudo python3 wifite2/wifite/wifite.py -c 6
 
-Decloaking & cracking a hidden access point (via the WPA Handshake attack):
-![Decloaking and Cracking a hidden access point](https://i.imgur.com/F6VPhbm.gif)
+# Attack specific ESSID
+sudo python3 wifite2/wifite/wifite.py -e "MyNetwork"
 
--------------
+# Show verbose output for debugging
+sudo python3 wifite2/wifite/wifite.py -v
 
-Cracking a weak WEP password (using the WEP Replay attack):
-![Cracking a weak WEP password](https://i.imgur.com/jP72rVo.gif)
+# Skip cracking, only capture handshakes
+sudo python3 wifite2/wifite/wifite.py --skip-crack
+```
 
--------------
+Expected Output
+---------------
+```
+  .     .     .    
+.´  ·  .     .  ·  `.  wifite2 2.7.2
+:  :  : (¯)  :  :  :  a wireless auditor by derv82
+`.  ·  ` /¯\ ´  ·  .´  maintained by kimocoder
+  `     /¯¯¯\     ´    https://github.com/kimocoder/wifite2
 
-Cracking a pre-captured handshake using John The Ripper (via the `--crack` option):
-![--crack option](https://i.imgur.com/iHcfCjp.gif)
+[+] option: targeting WPA-encrypted networks only
+
+[+] Scanning for WPA networks...
+[+] Found 3 WPA targets
+[+] Starting WPA attack against TargetNetwork (AA:BB:CC:DD:EE:FF)
+[+] Capturing WPA handshake...
+[+] Handshake captured! Cracking with Hashcat...
+[+] Password found: MySecurePassword123
+```
+
+**Note**: This WPA-Only edition automatically focuses on WPA-encrypted networks and skips all others with a clear message.
+
+## Repository Information
+
+### **Fork Information**
+This is a specialized fork of the original [wifite2](https://github.com/kimocoder/wifite2) project, modified to focus exclusively on WPA security testing.
+
+### **Key Differences from Original**
+- **Removed**: All WEP, WPS, and PMKID attack functionality
+- **Simplified**: Interface and command line arguments
+- **Focused**: Only WPA/WPA2/WPA3 handshake capture and cracking
+- **Streamlined**: Reduced dependencies and configuration complexity
+
+### **Installation Requirements**
+- Python 3.11+
+- Wireless card with monitor mode support
+- Required tools: `aircrack-ng`, `hashcat`, `tshark`
+- Root/sudo privileges for wireless operations
+
+### **Contributing**
+This is a specialized fork focused on WPA-only functionality. For general wireless auditing features, please refer to the [original wifite2 repository](https://github.com/kimocoder/wifite2).
+
+### **License**
+Same license as the original wifite2 project. See [LICENSE](LICENSE) file for details.
+
+### **Disclaimer**
+This tool is for educational and authorized security testing purposes only. Only use on networks you own or have explicit permission to test.
