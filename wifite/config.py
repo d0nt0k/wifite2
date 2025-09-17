@@ -21,7 +21,6 @@ class Configuration(object):
     cracked_file = None
     crack_handshake = None
     daemon = None
-    dont_use_pmkid = None
     encryption_filter = None
     existing_commands = None
     five_ghz = None
@@ -35,10 +34,7 @@ class Configuration(object):
     manufacturers = None
     min_power = None
     no_deauth = None
-    no_wps = None
-    wps_no_nullpin = None
     num_deauths = None
-    pmkid_timeout = None
     print_stack_traces = None
     random_mac = None
     require_fakeauth = None
@@ -53,31 +49,13 @@ class Configuration(object):
     target_essid = None
     temp_dir = None  # Temporary directory
     two_ghz = None
-    use_bully = None
-    use_reaver = None
     use_eviltwin = None
-    use_pmkid_only = None
-    wep_attacks = None
-    wep_crack_at_ivs = None
-    wep_filter = None
-    wep_keep_ivs = None
-    wep_pps = None
-    wep_restart_aircrack = None
-    wep_restart_stale_ivs = None
     wordlist = None
     wpa_attack_timeout = None
     wpa_deauth_timeout = None
     wpa_filter = None
     wpa_handshake_dir = None
     wpa_strip_handshake = None
-    wps_fail_threshold = None
-    wps_filter = None
-    wps_ignore_lock = None
-    wps_only = None
-    wps_pin = None
-    wps_pixie = None
-    wps_pixie_timeout = None
-    wps_timeout_threshold = None
 
     @classmethod
     def initialize(cls, load_interface=True):
@@ -125,27 +103,13 @@ class Configuration(object):
         cls.num_deauths = 1  # Number of deauth packets to send to each target.
         cls.daemon = False  # Don't put back interface back in managed mode
 
-        cls.encryption_filter = ['WEP', 'WPA', 'WPS']
+        cls.encryption_filter = ['WPA']
 
         # EvilTwin variables
         cls.use_eviltwin = False
         cls.eviltwin_port = 80
         cls.eviltwin_deauth_iface = None
         cls.eviltwin_fakeap_iface = None
-
-        # WEP variables
-        cls.wep_filter = False  # Only attack WEP networks
-        cls.wep_pps = 600  # Packets per second
-        cls.wep_timeout = 600  # Seconds to wait before failing
-        cls.wep_crack_at_ivs = 10000  # Minimum IVs to start cracking
-        cls.require_fakeauth = False
-        cls.wep_restart_stale_ivs = 11  # Seconds to wait before restarting
-        # Aireplay if IVs don't increaes.
-        # '0' means never restart.
-        cls.wep_restart_aircrack = 30  # Seconds to give aircrack to crack
-        # before restarting the process.
-        cls.wep_crack_at_ivs = 10000  # Number of IVS to start cracking
-        cls.wep_keep_ivs = False  # Retain .ivs files across multiple attacks.
 
         # WPA variables
         cls.wpa_filter = False  # Only attack WPA/WPA2 networks
@@ -156,11 +120,6 @@ class Configuration(object):
         cls.wpa_handshake_dir = 'hs'  # Dir to store handshakes
         cls.wpa_strip_handshake = False  # Strip non-handshake packets
         cls.ignore_old_handshakes = False  # Always fetch a new handshake
-
-        # PMKID variables
-        cls.use_pmkid_only = False  # Only use PMKID Capture+Crack attack
-        cls.pmkid_timeout = 300  # Time to wait for PMKID capture
-        cls.dont_use_pmkid = False  # Don't use PMKID attack
 
         # Default dictionary for cracking
         cls.cracked_file = 'cracked.json'
@@ -196,19 +155,6 @@ class Configuration(object):
                     if len(fields) >= 2:
                         cls.manufacturers[fields[0]] = " ".join(fields[1:]).rstrip('.')
 
-        # WPS variables
-        cls.wps_filter = False  # Only attack WPS networks
-        cls.no_wps = False  # Do not use WPS attacks (Pixie-Dust & PIN attacks)
-        cls.wps_only = False  # ONLY use WPS attacks on non-WEP networks
-        cls.use_bully = False  # Use bully instead of reaver
-        cls.use_reaver = False  # Use reaver instead of bully
-        cls.wps_pixie = True
-        cls.wps_no_nullpin = True
-        cls.wps_pin = True
-        cls.wps_ignore_lock = False  # Skip WPS PIN attack if AP is locked.
-        cls.wps_pixie_timeout = 300  # Seconds to wait for PIN before WPS Pixie attack fails
-        cls.wps_fail_threshold = 100  # Max number of failures
-        cls.wps_timeout_threshold = 100  # Max number of timeouts
 
         # Commands
         cls.show_cracked = False
@@ -241,10 +187,7 @@ class Configuration(object):
 
         args = Arguments(cls).args
         cls.parse_settings_args(args)
-        cls.parse_wep_args(args)
         cls.parse_wpa_args(args)
-        cls.parse_wps_args(args)
-        cls.parse_pmkid_args(args)
         cls.parse_encryption()
 
         # EvilTwin
@@ -254,7 +197,6 @@ class Configuration(object):
             Color.pl('{+} {C}option:{W} using {G}eviltwin attacks{W} against all targets')
         '''
 
-        cls.parse_wep_attacks()
 
         cls.validate()
 
@@ -389,40 +331,6 @@ class Configuration(object):
             cls.kill_conflicting_processes = True
             Color.pl('{+} {C}option:{W} kill conflicting processes {G}enabled{W}')
 
-    @classmethod
-    def parse_wep_args(cls, args):
-        """Parses WEP-specific arguments"""
-        if args.wep_filter:
-            cls.wep_filter = args.wep_filter
-
-        if args.wep_pps:
-            cls.wep_pps = args.wep_pps
-            Color.pl('{+} {C}option:{W} using {G}%d{W} packets/sec on WEP attacks' % args.wep_pps)
-
-        if args.wep_timeout:
-            cls.wep_timeout = args.wep_timeout
-            Color.pl('{+} {C}option:{W} WEP attack timeout set to {G}%d seconds{W}' % args.wep_timeout)
-
-        if args.require_fakeauth:
-            cls.require_fakeauth = True
-            Color.pl('{+} {C}option:{W} fake-authentication is {G}required{W} for WEP attacks')
-
-        if args.wep_crack_at_ivs:
-            cls.wep_crack_at_ivs = args.wep_crack_at_ivs
-            Color.pl('{+} {C}option:{W} will start cracking WEP keys at {G}%d IVs{W}' % args.wep_crack_at_ivs)
-
-        if args.wep_restart_stale_ivs:
-            cls.wep_restart_stale_ivs = args.wep_restart_stale_ivs
-            Color.pl('{+} {C}option:{W} will restart aireplay after {G}%d seconds{W} of no new IVs'
-                     % args.wep_restart_stale_ivs)
-
-        if args.wep_restart_aircrack:
-            cls.wep_restart_aircrack = args.wep_restart_aircrack
-            Color.pl('{+} {C}option:{W} will restart aircrack every {G}%d seconds{W}' % args.wep_restart_aircrack)
-
-        if args.wep_keep_ivs:
-            cls.wep_keep_ivs = args.wep_keep_ivs
-            Color.pl('{+} {C}option:{W} keep .ivs files across multiple WEP attacks')
 
     @classmethod
     def parse_wpa_args(cls, args):
@@ -470,156 +378,14 @@ class Configuration(object):
             cls.wpa_strip_handshake = True
             Color.pl('{+} {C}option:{W} will {G}strip{W} non-handshake packets')
 
-    @classmethod
-    def parse_wps_args(cls, args):
-        """Parses WPS-specific arguments"""
-        if args.wps_filter:
-            cls.wps_filter = args.wps_filter
 
-        if args.wps_only:
-            cls.wps_only = True
-            cls.wps_filter = True  # Also only show WPS networks
-            Color.pl('{+} {C}option:{W} will *only* attack WPS networks with '
-                     '{G}WPS attacks{W} (avoids handshake and PMKID)')
-
-        if args.no_wps:
-            # No WPS attacks at all
-            cls.no_wps = args.no_wps
-            cls.wps_pixie = False
-            cls.wps_no_nullpin = True
-            cls.wps_pin = False
-            Color.pl('{+} {C}option:{W} will {O}never{W} use {C}WPS attacks{W} (Pixie-Dust/PIN) on targets')
-
-        elif args.wps_pixie:
-            # WPS Pixie-Dust only
-            cls.wps_pixie = True
-            cls.wps_no_nullpin = True
-            cls.wps_pin = False
-            Color.pl('{+} {C}option:{W} will {G}only{W} use {C}WPS Pixie-Dust attack{W} (no {O}PIN{W}) on targets')
-
-        elif args.wps_no_nullpin:
-            # WPS NULL PIN only
-            cls.wps_pixie = True
-            cls.wps_no_nullpin = False
-            cls.wps_pin = True
-            Color.pl('{+} {C}option:{W} will {G}not{W} use {C}WPS NULL PIN attack{W} (no {O}PIN{W}) on targets')
-
-        elif args.wps_no_pixie:
-            # WPS PIN only
-            cls.wps_pixie = False
-            cls.wps_no_nullpin = True
-            cls.wps_pin = True
-            Color.pl('{+} {C}option:{W} will {G}only{W} use {C}WPS PIN attack{W} (no {O}Pixie-Dust{W}) on targets')
-
-        if args.use_bully:
-            from .tools.bully import Bully
-            if not Bully.exists():
-                Color.pl('{!} {R}Bully not found. Defaulting to {O}reaver{W}')
-                cls.use_bully = False
-            else:
-                cls.use_bully = args.use_bully
-                Color.pl('{+} {C}option:{W} use {C}bully{W} instead of {C}reaver{W} for WPS Attacks')
-
-        if args.use_reaver:
-            from .tools.reaver import Reaver
-            if not Reaver.exists():
-                Color.pl('{!} {R}Reaver not found. Defaulting to {O}bully{W}')
-                cls.use_reaver = False
-            else:
-                cls.use_reaver = args.use_reaver
-                Color.pl('{+} {C}option:{W} use {C}reaver{W} instead of {C}bully{W} for WPS Attacks')
-
-        if args.wps_pixie_timeout:
-            cls.wps_pixie_timeout = args.wps_pixie_timeout
-            Color.pl(
-                '{+} {C}option:{W} WPS pixie-dust attack will fail after {O}%d seconds{W}' % args.wps_pixie_timeout)
-
-        if args.wps_fail_threshold:
-            cls.wps_fail_threshold = args.wps_fail_threshold
-            Color.pl('{+} {C}option:{W} will stop WPS attack after {O}%d failures{W}' % args.wps_fail_threshold)
-
-        if args.wps_timeout_threshold:
-            cls.wps_timeout_threshold = args.wps_timeout_threshold
-            Color.pl('{+} {C}option:{W} will stop WPS attack after {O}%d timeouts{W}' % args.wps_timeout_threshold)
-
-        if args.wps_ignore_lock:
-            cls.wps_ignore_lock = True
-            Color.pl('{+} {C}option:{W} will {O}ignore{W} WPS lock-outs')
-
-    @classmethod
-    def parse_pmkid_args(cls, args):
-        if args.use_pmkid_only:
-            cls.use_pmkid_only = True
-            Color.pl('{+} {C}option:{W} will ONLY use {C}PMKID{W} attack on WPA networks')
-
-        if args.pmkid_timeout:
-            cls.pmkid_timeout = args.pmkid_timeout
-            Color.pl('{+} {C}option:{W} will wait {G}%d seconds{W} during {C}PMKID{W} capture' % args.pmkid_timeout)
-
-        if args.dont_use_pmkid:
-            cls.dont_use_pmkid = True
-            Color.pl('{+} {C}option:{W} will NOT use {C}PMKID{W} attack on WPA networks')
 
     @classmethod
     def parse_encryption(cls):
-        """Adjusts encryption filter (WEP and/or WPA and/or WPS)"""
-        cls.encryption_filter = []
-        if cls.wep_filter:
-            cls.encryption_filter.append('WEP')
-        if cls.wpa_filter: # WPA/WPA2
-            cls.encryption_filter.append('WPA') 
-        if cls.wpa3_filter:
-            cls.encryption_filter.append('WPA3')
-        if cls.owe_filter:
-            cls.encryption_filter.append('OWE')
-        if cls.wps_filter: # WPS can be on WPA/WPA2
-            cls.encryption_filter.append('WPS')
+        """Adjusts encryption filter to WPA only"""
+        cls.encryption_filter = ['WPA']
+        Color.pl('{+} {C}option:{W} targeting {G}WPA-encrypted networks{W} only')
 
-        cls.encryption_filter = sorted(list(set(cls.encryption_filter))) # Remove duplicates and sort
-
-        if not cls.encryption_filter:
-            # Default to scan all known types if no specific filter is chosen
-            cls.encryption_filter = ['WEP', 'WPA', 'WPA3', 'OWE', 'WPS']
-            Color.pl('{+} {C}option:{W} targeting {G}all known encryption types{W} by default')
-        elif len(cls.encryption_filter) == 5 and 'WPS' in cls.encryption_filter and 'OWE' in cls.encryption_filter: # Approximation for "all"
-             Color.pl('{+} {C}option:{W} targeting {G}all specified encrypted networks{W}')
-        else:
-            Color.pl('{+} {C}option:{W} targeting {G}%s-encrypted{W} networks' % '/'.join(cls.encryption_filter))
-
-    @classmethod
-    def parse_wep_attacks(cls):
-        """Parses and sets WEP-specific args (-chopchop, -fragment, etc)"""
-        cls.wep_attacks = []
-        from sys import argv
-        seen = set()
-        for arg in argv:
-            if arg in seen:
-                continue
-            seen.add(arg)
-            if arg == '-arpreplay':
-                cls.wep_attacks.append('replay')
-            elif arg == '-caffelatte':
-                cls.wep_attacks.append('caffelatte')
-            elif arg == '-chopchop':
-                cls.wep_attacks.append('chopchop')
-            elif arg == '-fragment':
-                cls.wep_attacks.append('fragment')
-            elif arg == '-hirte':
-                cls.wep_attacks.append('hirte')
-            elif arg == '-p0841':
-                cls.wep_attacks.append('p0841')
-        if not cls.wep_attacks:
-            # Use all attacks
-            cls.wep_attacks = ['replay',
-                               'fragment',
-                               'chopchop',
-                               'caffelatte',
-                               'p0841',
-                               'hirte']
-
-        elif len(cls.wep_attacks) > 0:
-            Color.pl('{+} {C}option:{W} using {G}%s{W} WEP attacks'
-                     % '{W}, {G}'.join(cls.wep_attacks))
 
     @classmethod
     def temp(cls, subfile=''):

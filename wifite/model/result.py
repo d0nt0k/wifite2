@@ -152,26 +152,6 @@ class CrackResult(object):
                                     essid=json['essid'],
                                     handshake_file=json['handshake_file'],
                                     key=json['key'])
-        elif json['type'] == 'WEP':
-            from .wep_result import CrackResultWEP
-            result = CrackResultWEP(bssid=json['bssid'],
-                                    essid=json['essid'],
-                                    hex_key=json['hex_key'],
-                                    ascii_key=json['ascii_key'])
-
-        elif json['type'] == 'WPS':
-            from .wps_result import CrackResultWPS
-            result = CrackResultWPS(bssid=json['bssid'],
-                                    essid=json['essid'],
-                                    pin=json['pin'],
-                                    psk=json['psk'])
-
-        elif json['type'] == 'PMKID':
-            from .pmkid_result import CrackResultPMKID
-            result = CrackResultPMKID(bssid=json['bssid'],
-                                      essid=json['essid'],
-                                      pmkid_file=json['pmkid_file'],
-                                      key=json['key'])
             
         else:
             from .ignored_result import CrackResultIgnored
@@ -206,21 +186,6 @@ if __name__ == '__main__':
     obj = CrackResult.load(json)
     obj.dump()
 
-    # Deserialize WEP object
-    Color.pl('\nCracked WEP:')
-    json = loads(
-        '{"bssid": "AA:BB:CC:DD:EE:FF", "hex_key": "00:01:02:03:04", "ascii_key": "abcde", '
-        '"essid": "Test Router", "date": 1433402915, "type": "WEP"}')
-    obj = CrackResult.load(json)
-    obj.dump()
-
-    # Deserialize WPS object
-    Color.pl('\nCracked WPS:')
-    json = loads(
-        '{"psk": "the psk", "bssid": "AA:BB:CC:DD:EE:FF", "pin": "01234567", "essid": "Test Router", '
-        '"date": 1433403278, "type": "WPS"}')
-    obj = CrackResult.load(json)
-    obj.dump()
 
     # Deserialize Ignored object
     Color.pl('\nIgnored:')

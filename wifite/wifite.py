@@ -112,8 +112,6 @@ def main():
     except KeyboardInterrupt:
         Color.pl('\n{!} {O}Interrupted, Shutting down...{W}')
 
-    # Delete Reaver .pcap
-    subprocess.run(["rm", "reaver_output.pcap"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     Configuration.exit_gracefully()
 
 
