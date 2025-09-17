@@ -212,12 +212,8 @@ class Configuration(object):
 
     @classmethod
     def validate(cls):
-        if cls.use_pmkid_only and cls.wps_only:
-            Color.pl('{!} {R}Bad Configuration:{O} --pmkid and --wps-only are not compatible')
-            raise RuntimeError('Unable to attack networks: --pmkid and --wps-only are not compatible together')
-        if cls.use_pmkid_only and cls.dont_use_pmkid:
-            Color.pl('{!} {R}Bad Configuration:{O} --pmkid and --no-pmkid are not compatible')
-            raise RuntimeError('Unable to attack networks: --pmkid and --no-pmkid are not compatible together')
+        # WPA-only mode - no validation needed for removed attack types
+        pass
 
     @classmethod
     def parse_settings_args(cls, args):
